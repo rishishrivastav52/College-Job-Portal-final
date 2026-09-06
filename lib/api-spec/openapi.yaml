@@ -10,6 +10,14 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Role-aware account access
+  - name: jobs
+    description: Job discovery and company postings
+  - name: profiles
+    description: Student profiles
+  - name: applications
+    description: Student applications and recruiter review
 paths:
   /healthz:
     get:
@@ -24,7 +32,251 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /auth/signup:
+    post:
+      operationId: signUp
+      tags: [auth]
+      summary: Create an account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupInput"
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "409":
+          description: Email already exists
+  /auth/login:
+    post:
+      operationId: logIn
+      tags: [auth]
+      summary: Sign in and establish a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "401":
+          description: Invalid credentials
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get the current session
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "401":
+          description: Not signed in
+  /auth/logout:
+    post:
+      operationId: logOut
+      tags: [auth]
+      summary: End the current session
+      responses:
+        "204":
+          description: Signed out
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List active job openings
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: location
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Active jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Publish a job as a company
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobInput"
+      responses:
+        "201":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+  /jobs/{jobId}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get one job
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          description: Job not found
+  /company/dashboard:
+    get:
+      operationId: getCompanyDashboard
+      tags: [jobs]
+      summary: Get recruiter dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyDashboard"
+  /company/jobs/{jobId}/applicants:
+    get:
+      operationId: listJobApplicants
+      tags: [applications]
+      summary: List applicants for a company job
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Applicants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Applicant"
+  /profiles/me:
+    get:
+      operationId: getMyProfile
+      tags: [profiles]
+      summary: Get the current student's profile
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+    put:
+      operationId: saveMyProfile
+      tags: [profiles]
+      summary: Create or update the current student's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInput"
+      responses:
+        "200":
+          description: Saved profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+  /applications:
+    get:
+      operationId: listMyApplications
+      tags: [applications]
+      summary: List the current student's applications
+      responses:
+        "200":
+          description: Applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+    post:
+      operationId: createApplication
+      tags: [applications]
+      summary: Apply to a job with a PDF resume
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ApplicationInput"
+      responses:
+        "201":
+          description: Application created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+  /applications/{applicationId}/status:
+    patch:
+      operationId: updateApplicationStatus
+      tags: [applications]
+      summary: Update an applicant's status
+      parameters:
+        - name: applicationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationStatusInput"
+      responses:
+        "200":
+          description: Updated application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
 components:
+  parameters:
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: integer
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +285,139 @@ components:
           type: string
       required:
         - status
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        email: { type: string, format: email }
+        role:
+          type: string
+          enum: [student, company]
+        name: { type: string }
+      required: [id, email, role, name]
+    AuthSession:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+      required: [user]
+    SignupInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 6 }
+        role:
+          type: string
+          enum: [student, company]
+        name: { type: string, minLength: 1 }
+      required: [email, password, role, name]
+    LoginInput:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 1 }
+      required: [email, password]
+    Job:
+      type: object
+      properties:
+        id: { type: integer }
+        companyId: { type: integer }
+        companyName: { type: string }
+        companyInitials: { type: string }
+        title: { type: string }
+        description: { type: string }
+        requirements:
+          type: array
+          items: { type: string }
+        location: { type: string }
+        type: { type: string }
+        salary: { type: ["string", "null"] }
+        postedAt: { type: string, format: date-time }
+        applicantsCount: { type: integer }
+        hasApplied: { type: boolean }
+      required: [id, companyId, companyName, companyInitials, title, description, requirements, location, type, salary, postedAt, applicantsCount, hasApplied]
+    JobInput:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        description: { type: string, minLength: 1 }
+        requirements:
+          type: array
+          items: { type: string }
+        location: { type: string, minLength: 1 }
+        type: { type: string, minLength: 1 }
+        salary: { type: string }
+      required: [title, description, requirements, location, type]
+    Profile:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        name: { type: string }
+        headline: { type: string }
+        school: { type: string }
+        graduationYear: { type: ["integer", "null"] }
+        skills:
+          type: array
+          items: { type: string }
+        bio: { type: string }
+        resumeUrl: { type: ["string", "null"] }
+      required: [id, userId, name, headline, school, graduationYear, skills, bio, resumeUrl]
+    ProfileInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        headline: { type: string }
+        school: { type: string }
+        graduationYear: { type: ["integer", "null"] }
+        skills:
+          type: array
+          items: { type: string }
+        bio: { type: string }
+      required: [name, headline, school, graduationYear, skills, bio]
+    Application:
+      type: object
+      properties:
+        id: { type: integer }
+        jobId: { type: integer }
+        jobTitle: { type: string }
+        companyName: { type: string }
+        studentId: { type: integer }
+        studentName: { type: string }
+        studentEmail: { type: string, format: email }
+        resumeUrl: { type: ["string", "null"] }
+        status:
+          type: string
+          enum: [pending, reviewed, interview, rejected]
+        appliedAt: { type: string, format: date-time }
+      required: [id, jobId, jobTitle, companyName, studentId, studentName, studentEmail, resumeUrl, status, appliedAt]
+    ApplicationInput:
+      type: object
+      properties:
+        jobId: { type: integer }
+        resume:
+          type: string
+          format: binary
+      required: [jobId, resume]
+    ApplicationStatusInput:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, reviewed, interview, rejected]
+      required: [status]
+    Applicant:
+      allOf:
+        - $ref: "#/components/schemas/Application"
+    CompanyDashboard:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        totalApplicants: { type: integer }
+        interviews: { type: integer }
+        profileViews: { type: integer }
+      required: [jobs, totalApplicants, interviews, profileViews]
 

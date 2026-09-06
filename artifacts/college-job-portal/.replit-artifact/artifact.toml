@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "CampusHire Job Portal"
+description = "A focused college recruiting marketplace where students discover internships, build profiles, submit resumes, and track applications while companies post opportunities and manage applicants."
+version = "1.0.0"
+id = "artifacts/college-job-portal"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22073
+
+[services.development]
+run = "pnpm --filter @workspace/college-job-portal run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/college-job-portal", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/college-job-portal/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22073"
+BASE_PATH = "/"
