@@ -1,0 +1,14 @@
+{
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm --filter @workspace/college-job-portal run build",
+  "outputDirectory": "artifacts/college-job-portal/dist/public",
+  "env": {
+    "BASE_PATH": "/"
+  },
+  "rewrites": [
+    {
+      "source": "/((?!api(?:/|$)).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
