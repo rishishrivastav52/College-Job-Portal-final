@@ -28,12 +28,13 @@ export function verifyPassword(password: string, stored: string) {
   return timingSafeEqual(Buffer.from(actual), Buffer.from(expected));
 }
 
-export function setSession(res: Response, userId: number) {
+export function setSession(res: Response, userId: number, forwardedProto?: string) {
   const value = `${userId}.${sign(String(userId))}`;
+  const secure = process.env.NODE_ENV === "production" || forwardedProto === "https" || Boolean(process.env.REPLIT_DEV_DOMAIN);
   res.cookie(SESSION_COOKIE, value, {
     httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+    secure,
     maxAge: 1000 * 60 * 60 * 24 * 14,
   });
 }
