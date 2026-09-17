@@ -38,7 +38,8 @@ export const SignUpResponse = zod.object({
   "email": zod.string().email(),
   "role": zod.enum(['student', 'company']),
   "name": zod.string()
-})
+}),
+  "sessionToken": zod.string().optional().describe('Signed fallback session token for preview environments that block cross-origin cookies')
 })
 
 
@@ -59,7 +60,8 @@ export const LogInResponse = zod.object({
   "email": zod.string().email(),
   "role": zod.enum(['student', 'company']),
   "name": zod.string()
-})
+}),
+  "sessionToken": zod.string().optional().describe('Signed fallback session token for preview environments that block cross-origin cookies')
 })
 
 
@@ -72,7 +74,8 @@ export const GetCurrentUserResponse = zod.object({
   "email": zod.string().email(),
   "role": zod.enum(['student', 'company']),
   "name": zod.string()
-})
+}),
+  "sessionToken": zod.string().optional().describe('Signed fallback session token for preview environments that block cross-origin cookies')
 })
 
 

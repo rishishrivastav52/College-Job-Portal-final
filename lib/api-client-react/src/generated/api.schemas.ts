@@ -26,6 +26,8 @@ export interface User {
 
 export interface AuthSession {
   user: User;
+  /** Signed fallback session token for preview environments that block cross-origin cookies */
+  sessionToken?: string;
 }
 
 export type SignupInputRole = typeof SignupInputRole[keyof typeof SignupInputRole];

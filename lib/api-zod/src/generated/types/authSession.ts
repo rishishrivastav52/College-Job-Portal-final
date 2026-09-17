@@ -9,4 +9,6 @@ import type { User } from './user';
 
 export interface AuthSession {
   user: User;
+  /** Signed fallback session token for preview environments that block cross-origin cookies */
+  sessionToken?: string;
 }
