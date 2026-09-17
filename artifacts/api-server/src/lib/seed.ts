@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db, jobsTable, usersTable } from "@workspace/db";
-import { hashPassword } from "./auth";
+import { hashPassword } from "./auth.js";
 
 export async function seedDemoData() {
   const [student] = await db

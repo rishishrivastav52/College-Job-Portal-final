@@ -5,7 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { Job } from './job';
+import type { Job } from './job.js';
 
 export interface CompanyDashboard {
   jobs: Job[];

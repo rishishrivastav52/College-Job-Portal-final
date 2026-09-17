@@ -5,7 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { SignupInputRole } from './signupInputRole';
+import type { SignupInputRole } from './signupInputRole.js';
 
 export interface SignupInput {
   email: string;

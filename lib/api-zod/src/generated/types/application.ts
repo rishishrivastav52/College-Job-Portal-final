@@ -5,7 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { ApplicationStatus } from './applicationStatus';
+import type { ApplicationStatus } from './applicationStatus.js';
 
 export interface Application {
   id: number;

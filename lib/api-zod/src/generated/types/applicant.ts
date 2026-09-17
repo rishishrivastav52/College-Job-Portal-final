@@ -5,6 +5,6 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { Application } from './application';
+import type { Application } from './application.js';
 
 export type Applicant = Application;
