@@ -1,11 +1,23 @@
 import app from "../artifacts/api-server/src/app";
 import { seedDemoData } from "../artifacts/api-server/src/lib/seed";
-import type { NextFunction, Request, Response } from "express";
+
+type ServerlessRequest = {
+  headers: Record<string, string | string[] | undefined>;
+  [key: string]: unknown;
+};
+
+type ServerlessResponse = {
+  headersSent: boolean;
+  status: (code: number) => ServerlessResponse;
+  json: (body: unknown) => unknown;
+};
+
+type NextFunction = (error?: unknown) => void;
 
 let seedPromise: Promise<void> | undefined;
 const expressHandler = app as unknown as (
-  req: Request,
-  res: Response,
+  req: ServerlessRequest,
+  res: ServerlessResponse,
   next: NextFunction,
 ) => void;
 
@@ -15,7 +27,10 @@ function ensureSeeded() {
 }
 
 
-export default async function handler(req: Request, res: Response) {
+export default async function handler(
+  req: ServerlessRequest,
+  res: ServerlessResponse,
+) {
   try {
     await ensureSeeded();
     return expressHandler(req, res, (error?: unknown) => {
