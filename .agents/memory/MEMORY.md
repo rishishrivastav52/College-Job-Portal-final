@@ -1,0 +1,1 @@
+- [Private resume storage](blob-resume-access.md) — proxy private Vercel Blob resumes through the API after ownership checks.

@@ -12,7 +12,7 @@ import {
   UpdateApplicationStatusResponse,
 } from "@workspace/api-zod";
 import { db, applicationsTable, jobsTable, usersTable } from "@workspace/db";
-import { put } from "@vercel/blob";
+import { get, put } from "@vercel/blob";
 import { getSessionUserId } from "../lib/auth";
 
 const router: IRouter = Router();
@@ -48,7 +48,9 @@ async function shapeApplication(applicationId: number) {
     studentId: row.application.studentId,
     studentName: row.studentName,
     studentEmail: row.studentEmail,
-    resumeUrl: row.application.resumeUrl,
+    resumeUrl: row.application.resumeUrl
+      ? `/api/applications/${row.application.id}/resume`
+      : null,
     status: row.application.status,
     appliedAt: row.application.createdAt.toISOString(),
   };
@@ -79,11 +81,11 @@ router.post("/applications", upload.single("resume"), async (req, res) => {
   let resumeUrl: string | null = null;
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     const blob = await put(`resumes/${userId}/${Date.now()}-${req.file.originalname}`, req.file.buffer, {
-      access: "public",
+      access: "private",
       contentType: "application/pdf",
       token: process.env.BLOB_READ_WRITE_TOKEN,
     });
-    resumeUrl = blob.url;
+    resumeUrl = blob.pathname;
   }
   const [application] = await db.insert(applicationsTable).values({
     jobId,
@@ -92,6 +94,35 @@ router.post("/applications", upload.single("resume"), async (req, res) => {
   }).returning();
   const shaped = await shapeApplication(application.id);
   return res.status(201).json(CreateApplicationResponse.parse(shaped));
+});
+
+router.get("/applications/:applicationId/resume", async (req, res) => {
+  const userId = getSessionUserId(req);
+  const applicationId = Number(req.params.applicationId);
+  if (!userId || !Number.isInteger(applicationId)) {
+    return res.status(401).json({ error: "Sign in to view this resume" });
+  }
+  const [row] = await db
+    .select({ application: applicationsTable, job: jobsTable })
+    .from(applicationsTable)
+    .innerJoin(jobsTable, eq(applicationsTable.jobId, jobsTable.id))
+    .where(eq(applicationsTable.id, applicationId))
+    .limit(1);
+  if (!row || (row.application.studentId !== userId && row.job.companyId !== userId)) {
+    return res.status(404).json({ error: "Resume not found" });
+  }
+  if (!row.application.resumeUrl || !process.env.BLOB_READ_WRITE_TOKEN) {
+    return res.status(404).json({ error: "Resume not available" });
+  }
+  const blob = await get(row.application.resumeUrl, {
+    access: "private",
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+  });
+  if (!blob) return res.status(404).json({ error: "Resume not found" });
+  res.setHeader("Content-Type", blob.blob.contentType ?? "application/pdf");
+  res.setHeader("Content-Disposition", "inline");
+  const bytes = await new Response(blob.stream).arrayBuffer();
+  return res.send(Buffer.from(bytes));
 });
 
 router.get("/company/jobs/:jobId/applicants", async (req, res) => {

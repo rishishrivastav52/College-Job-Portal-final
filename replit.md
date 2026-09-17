@@ -1,6 +1,6 @@
-# [Project name]
+# CampusHire Job Portal
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+CampusHire helps college students discover early-career roles, apply with a resume, and track outcomes while companies publish jobs and review applicants.
 
 ## Run & Operate
 
@@ -9,7 +9,7 @@ _Replace the heading above with the project's name, and this line with one sente
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL`, `SESSION_SECRET`, and `BLOB_READ_WRITE_TOKEN`
 
 ## Stack
 
@@ -22,15 +22,22 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/college-job-portal/src/` — React UI, route pages, and shared CampusHire visual components
+- `artifacts/api-server/src/routes/` — role-aware auth, jobs, profiles, and applications API
+- `lib/api-spec/openapi.yaml` — source of truth for API contracts and generated hooks
+- `lib/db/src/schema/index.ts` — PostgreSQL schema for users, profiles, jobs, and applications
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Account access uses signed HTTP-only sessions backed by the PostgreSQL user table because this college project explicitly requested simple database checks rather than a hosted auth provider.
+- Resume files are uploaded server-side to Vercel Blob as private objects; the API proxies authorized resume reads so recruiters do not need direct store credentials.
+- The frontend uses the generated OpenAPI client and role-aware routes so Student and Company experiences share one contract.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Students can create accounts, browse searchable internships, maintain a profile, submit PDF resumes, and track application status.
+- Companies can create accounts, publish roles, see applicant counts, review student resumes, and move applications through pending, reviewed, interview, or rejected.
+- Demo accounts are seeded for quick exploration: `maya@campushire.demo` and `hello@northstar.demo`, both using `campus123`.
 
 ## User preferences
 
@@ -38,7 +45,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Run API codegen after editing `lib/api-spec/openapi.yaml`.
+- Vercel Blob must be configured with a private store token; resume URLs intentionally point back through `/api/applications/:applicationId/resume`.
 
 ## Pointers
 
