@@ -1,5 +1,7 @@
 import { useEffect, useState, type ComponentType } from "react";
 
+import { Express } from 'express-serve-static-core';
+
 import { modules as discoveredModules } from "./.generated/mockup-components";
 
 type ModuleMap = Record<string, () => Promise<Record<string, unknown>>>;
