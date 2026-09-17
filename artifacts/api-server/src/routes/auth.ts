@@ -33,8 +33,8 @@ router.post("/auth/signup", async (req, res) => {
     role: input.role,
     name: input.name,
   }).returning();
-  setSession(res, user.id, req.headers["x-forwarded-proto"] as string | undefined);
-  return res.status(201).json(SignUpResponse.parse({ user: toUser(user) }));
+  const sessionToken = setSession(res, user.id, req.headers["x-forwarded-proto"] as string | undefined);
+  return res.status(201).json(SignUpResponse.parse({ user: toUser(user), sessionToken }));
 });
 
 router.post("/auth/login", async (req, res) => {
@@ -44,8 +44,8 @@ router.post("/auth/login", async (req, res) => {
   if (!user || !verifyPassword(parsed.data.password, user.passwordHash)) {
     return res.status(401).json({ error: "Email or password is incorrect" });
   }
-  setSession(res, user.id, req.headers["x-forwarded-proto"] as string | undefined);
-  return res.json(LogInResponse.parse({ user: toUser(user) }));
+  const sessionToken = setSession(res, user.id, req.headers["x-forwarded-proto"] as string | undefined);
+  return res.json(LogInResponse.parse({ user: toUser(user), sessionToken }));
 });
 
 router.get("/auth/me", async (req, res) => {

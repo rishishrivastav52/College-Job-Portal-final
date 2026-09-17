@@ -37,6 +37,7 @@ export function setSession(res: Response, userId: number, forwardedProto?: strin
     secure,
     maxAge: 1000 * 60 * 60 * 24 * 14,
   });
+  return value;
 }
 
 export function clearSession(res: Response) {
@@ -44,7 +45,9 @@ export function clearSession(res: Response) {
 }
 
 export function getSessionUserId(req: Request) {
-  const value = req.cookies?.[SESSION_COOKIE] as string | undefined;
+  const authorization = req.headers.authorization;
+  const bearer = authorization?.startsWith("Bearer ") ? authorization.slice(7) : undefined;
+  const value = bearer ?? (req.cookies?.[SESSION_COOKIE] as string | undefined);
   if (!value) return null;
   const [id, signature] = value.split(".");
   if (!id || !signature || signature !== sign(id)) return null;

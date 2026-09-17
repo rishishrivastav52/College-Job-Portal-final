@@ -144,6 +144,25 @@ function getStringField(value: unknown, key: string): string | undefined {
   return trimmed === "" ? undefined : trimmed;
 }
 
+function getStoredSessionToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.sessionStorage.getItem("campushire_session_token");
+  } catch {
+    return null;
+  }
+}
+
+function storeSessionToken(token: string | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (token) window.sessionStorage.setItem("campushire_session_token", token);
+    else window.sessionStorage.removeItem("campushire_session_token");
+  } catch {
+    // Cookie sessions remain available when sessionStorage is unavailable.
+  }
+}
+
 function truncate(text: string, maxLength = 300): string {
   return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
 }
@@ -351,8 +370,10 @@ export async function customFetch<T = unknown>(
 
   // Attach bearer token when an auth getter is configured and no
   // Authorization header has been explicitly provided.
-  if (_authTokenGetter && !headers.has("authorization")) {
-    const token = await _authTokenGetter();
+  if (!headers.has("authorization")) {
+    const token = _authTokenGetter
+      ? await _authTokenGetter()
+      : getStoredSessionToken();
     if (token) {
       headers.set("authorization", `Bearer ${token}`);
     }
@@ -372,5 +393,11 @@ export async function customFetch<T = unknown>(
     throw new ApiError(response, errorData, requestInfo);
   }
 
-  return (await parseSuccessBody(response, responseType, requestInfo)) as T;
+  const result = await parseSuccessBody(response, responseType, requestInfo);
+  if (requestInfo.url.includes("/auth/login") || requestInfo.url.includes("/auth/signup")) {
+    storeSessionToken(getStringField(result, "sessionToken") ?? null);
+  } else if (requestInfo.url.includes("/auth/logout")) {
+    storeSessionToken(null);
+  }
+  return result as T;
 }

@@ -300,6 +300,9 @@ components:
       properties:
         user:
           $ref: "#/components/schemas/User"
+        sessionToken:
+          type: string
+          description: Signed fallback session token for preview environments that block cross-origin cookies
       required: [user]
     SignupInput:
       type: object
